@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu Monty Hall</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .doors {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .door {
+            width: 100px;
+            height: 150px;
+            background-color: #8b4513;
+            border: 5px solid #4a2608;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+        }
+        .door:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #stats {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Jeu Monty Hall</h1>
+        <div class="doors">
+            <button class="door" id="door1">1</button>
+            <button class="door" id="door2">2</button>
+            <button class="door" id="door3">3</button>
+        </div>
+        <div id="message"></div>
+        <div id="choice-buttons" style="display: none;">
+            <button id="switch">Changer</button>
+            <button id="stay">Rester</button>
+        </div>
+        <button id="play-again" style="display: none;">Rejouer</button>
+        <div id="stats"></div>
+    </div>
+
+    <script>
+        let partiesJouees = 0;
+        let victoiresChangement = 0;
+        let victoiresMaintien = 0;
+        let porteChoisie = null;
+        let porteGagnante = null;
+        let porteRevelee = null;
+
+        const portes = document.querySelectorAll('.door');
+        const message = document.getElementById('message');
+        const boutonsChoix = document.getElementById('choice-buttons');
+        const boutonRejouer = document.getElementById('play-again');
+        const stats = document.getElementById('stats');
+
+        function reinitialiserJeu() {
+            porteChoisie = null;
+            porteGagnante = Math.floor(Math.random() * 3) + 1;
+            porteRevelee = null;
+            message.textContent = 'Choisissez une porte !';
+            boutonsChoix.style.display = 'none';
+            boutonRejouer.style.display = 'none';
+            portes.forEach(porte => {
+                porte.disabled = false;
+                porte.style.backgroundColor = '#8b4513';
+            });
+        }
+
+        function choisirPorte(porte) {
+            porteChoisie = porte;
+            do {
+                porteRevelee = Math.floor(Math.random() * 3) + 1;
+            } while (porteRevelee === porteChoisie || porteRevelee === porteGagnante);
+
+            portes.forEach(p => {
+                if (parseInt(p.textContent) !== porteChoisie && parseInt(p.textContent) !== porteRevelee) {
+                    p.disabled = true;
+                }
+            });
+
+            document.getElementById(`door${porteRevelee}`).style.backgroundColor = 'green';
+            message.textContent = `La porte ${porteRevelee} contient une chèvre. Voulez-vous changer votre choix ?`;
+            boutonsChoix.style.display = 'block';
+        }
+
+        function terminerJeu(aChange) {
+            const victoire = aChange ? porteChoisie !== porteGagnante : porteChoisie === porteGagnante;
+            partiesJouees++;
+            if (victoire) {
+                if (aChange) victoiresChangement++;
+                else victoiresMaintien++;
+            }
+
+            portes.forEach(porte => {
+                porte.disabled = true;
+                if (parseInt(porte.textContent) === porteGagnante) {
+                    porte.style.backgroundColor = 'gold';
+                } else if (parseInt(porte.textContent) !== porteRevelee) {
+                    porte.style.backgroundColor = 'green';
+                }
+            });
+
+            message.textContent = victoire ? 'Vous avez gagné !' : 'Vous avez perdu.';
+            boutonsChoix.style.display = 'none';
+            boutonRejouer.style.display = 'inline-block';
+            mettreAJourStats();
+        }
+
+        function mettreAJourStats() {
+            stats.innerHTML = `
+                Parties jouées : ${partiesJouees}<br>
+                Victoires en changeant : ${victoiresChangement} (${((victoiresChangement / partiesJouees) * 100).toFixed(2)}%)<br>
+                Victoires en restant : ${victoiresMaintien} (${((victoiresMaintien / partiesJouees) * 100).toFixed(2)}%)
+            `;
+        }
+
+        portes.forEach(porte => {
+            porte.addEventListener('click', () => choisirPorte(parseInt(porte.textContent)));
+        });
+
+        document.getElementById('switch').addEventListener('click', () => terminerJeu(true));
+        document.getElementById('stay').addEventListener('click', () => terminerJeu(false));
+        boutonRejouer.addEventListener('click', reinitialiserJeu);
+
+        reinitialiserJeu();
+    </script>
+</body>
+</html>
